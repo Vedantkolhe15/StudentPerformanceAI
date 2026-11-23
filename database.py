@@ -1,14 +1,15 @@
-import streamlit as st
 import os
 import pandas as pd
+import streamlit as st
 
 from datetime import datetime
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
-# Load environment variables
 load_dotenv()
 
+
+# Supabase Connection
 def get_connection() -> Client:
 
     url = os.getenv("SUPABASE_URL")
@@ -24,15 +25,6 @@ def get_connection() -> Client:
         raise ValueError("Supabase URL or API Key missing")
 
     return create_client(url, key)
-
-
-# Supabase Connection
-def get_connection() -> Client:
-
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        raise ValueError("Supabase URL or API Key missing in .env")
-
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 # Create / Verify Table
