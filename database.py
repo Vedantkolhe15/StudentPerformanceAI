@@ -1,54 +1,53 @@
-import sqlite3
+import streamlit as st
+import os
+import pandas as pd
+
 from datetime import datetime
+from dotenv import load_dotenv
+from supabase import create_client, Client
+
+# Load environment variables
+load_dotenv()
+
+def get_connection() -> Client:
+
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_KEY")
+
+    try:
+        url = url or st.secrets["SUPABASE_URL"]
+        key = key or st.secrets["SUPABASE_KEY"]
+    except Exception:
+        pass
+
+    if not url or not key:
+        raise ValueError("Supabase URL or API Key missing")
+
+    return create_client(url, key)
 
 
-DB_NAME = "student_performance.db"
+# Supabase Connection
+def get_connection() -> Client:
+
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        raise ValueError("Supabase URL or API Key missing in .env")
+
+    return create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
-def get_connection():
-    return sqlite3.connect(DB_NAME)
-
-
-# =========================================================
-# CREATE DATABASE TABLE
-# =========================================================
-
+# Create / Verify Table
 def create_table():
 
-    conn = get_connection()
-    cursor = conn.cursor()
+    supabase = get_connection()
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS student_predictions (
+    response = supabase.table(
+        "student_predictions"
+    ).select("id").limit(1).execute()
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            student_name TEXT NOT NULL,
-
-            attendance REAL,
-            study_hours REAL,
-            assignment_score REAL,
-            internal_marks REAL,
-            previous_marks REAL,
-            participation REAL,
-
-            predicted_score REAL,
-            performance TEXT,
-            risk_level TEXT,
-
-            created_at TEXT
-
-        )
-    """)
-
-    conn.commit()
-    conn.close()
+    return True
 
 
-# =========================================================
-# SAVE PREDICTION
-# =========================================================
-
+# Save Prediction
 def save_prediction(
     student_name,
     attendance,
@@ -62,78 +61,41 @@ def save_prediction(
     risk_level
 ):
 
-    conn = get_connection()
-    cursor = conn.cursor()
+    supabase = get_connection()
 
-    cursor.execute("""
-        INSERT INTO student_predictions (
+    student_data = {
+        "student_name": student_name,
+        "attendance": float(attendance),
+        "study_hours": float(study_hours),
+        "assignment_score": float(assignment_score),
+        "internal_marks": float(internal_marks),
+        "previous_marks": float(previous_marks),
+        "participation": float(participation),
+        "predicted_score": float(predicted_score),
+        "performance": performance,
+        "risk_level": risk_level,
+        "created_at": datetime.now().astimezone().isoformat()
+    }
 
-            student_name,
-            attendance,
-            study_hours,
-            assignment_score,
-            internal_marks,
-            previous_marks,
-            participation,
-            predicted_score,
-            performance,
-            risk_level,
-            created_at
+    response = supabase.table(
+        "student_predictions"
+    ).insert(student_data).execute()
 
-        )
-
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-
-        student_name,
-        attendance,
-        study_hours,
-        assignment_score,
-        internal_marks,
-        previous_marks,
-        participation,
-        predicted_score,
-        performance,
-        risk_level,
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    ))
-
-    conn.commit()
-    conn.close()
+    return response.data
 
 
-# =========================================================
-# GET SAVED PREDICTIONS
-# =========================================================
-
+# Get Saved Predictions
 def get_predictions():
 
-    conn = get_connection()
+    supabase = get_connection()
 
-    query = """
-        SELECT
-            id,
-            student_name,
-            attendance,
-            study_hours,
-            assignment_score,
-            internal_marks,
-            previous_marks,
-            participation,
-            predicted_score,
-            performance,
-            risk_level,
-            created_at
-        FROM student_predictions
-        ORDER BY id DESC
-    """
+    response = supabase.table(
+        "student_predictions"
+    ).select("*").order(
+        "id",
+        desc=True
+    ).execute()
 
-    df = __import__("pandas").read_sql_query(
-        query,
-        conn
-    )
-
-    conn.close()
+    df = pd.DataFrame(response.data)
 
     return df
