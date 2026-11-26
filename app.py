@@ -1841,49 +1841,6 @@ elif page == "🤖 Performance Prediction":
         )
 
 
-        # -------------------------------------------------
-        # RESULT TITLE
-        # -------------------------------------------------
-
-        st.markdown(
-            '<div class="section-title">'
-            '📊 Prediction Result'
-            '</div>',
-            unsafe_allow_html=True
-        )
-
-
-        result1, result2, result3 = st.columns(3)
-
-
-        with result1:
-
-            st.metric(
-                "🎯 Predicted Score",
-                f"{predicted_score}%"
-            )
-
-
-        with result2:
-
-            st.metric(
-                "🏆 Performance",
-                performance
-            )
-
-
-        with result3:
-
-            st.metric(
-                "⚠️ Risk Level",
-                risk
-            )
-
-
-        # -------------------------------------------------
-        # PROGRESS BAR
-        # -------------------------------------------------
-
                 # -------------------------------------------------
         # PROFESSIONAL PREDICTION RESULT
         # -------------------------------------------------
